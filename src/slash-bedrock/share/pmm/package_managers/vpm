@@ -1,0 +1,180 @@
+#!/bedrock/libexec/busybox awk -f
+#
+# Package Manager Manager vpm support script
+#
+#      This program is free software; you can redistribute it and/or
+#      modify it under the terms of the GNU General Public License
+#      version 2 as published by the Free Software Foundation.
+#
+# Copyright (c) 2021 zenobit <b0yc8wrv7@relay.firefox.com>
+
+system_package_managers["xbps"]
+package_manager_canary_executables["vpm"] = "vpm"
+supersedes["vpm"] = "xbps"
+
+#
+# General, operation independent flags.
+#
+# Unlike operations, flags should not have implementations[].
+#
+user_interfaces["vpm", "assume-no"]  = ""
+user_interfaces["vpm", "assume-yes"] = "-y/--yes"
+user_interfaces["vpm", "confirm"]    = ""
+user_interfaces["vpm", "quiet"]      = ""
+user_interfaces["vpm", "verbose"]    = "-v/--verbose"
+
+#
+# Operations which directly forward the underlying command output.
+#
+user_interfaces["vpm", "install-packages"]         = "pmm i <pkgs>"
+user_interfaces["vpm", "reinstall-packages"]       = "pmm fi <pkgs>"
+user_interfaces["vpm", "remove-packages-limited"]  = "pmm remove <pkgs>"
+user_interfaces["vpm", "remove-packages-full"]     = "" # default remove command leaves config files
+user_interfaces["vpm", "verify-packages"]          = "pmm pkgdb <pkgs>"
+user_interfaces["vpm", "verify-all-packages"]      = "pmm pkgdb -a"
+user_interfaces["vpm", "mark-packages-explicit"]   = "pmm pkgdb -m manual <pkgs>"
+user_interfaces["vpm", "mark-packages-implicit"]   = "pmm pkgdb -m auto <pkgs>"
+user_interfaces["vpm", "show-package-information"] = "pmm in <pkgs>"
+user_interfaces["vpm", "clear-cache"]              = "pmm cl"
+user_interfaces["vpm", "remove-orphans"]           = "pmm ar"
+user_interfaces["vpm", "update-package-database"]  = "pmm S"
+user_interfaces["vpm", "update-file-database"]     = "pmm wp"
+user_interfaces["vpm", "upgrade-packages-limited"] = "" # no partial upgrade concept
+user_interfaces["vpm", "upgrade-packages-full"]    = "pmm up"
+
+implementations["vpm", "install-packages"]         = "strat -r ${stratum} vpm i ${flags} ${items}"
+implementations["vpm", "reinstall-packages"]       = "strat -r ${stratum} vpm fi ${flags} ${items}"
+implementations["vpm", "remove-packages-limited"]  = "strat -r ${stratum} vpm remove ${flags} ${items}"
+implementations["vpm", "remove-packages-full"]     = "strat -r ${stratum} vpm remove ${flags} ${items}"
+implementations["vpm", "verify-packages"]          = "strat -r ${stratum} vpm pkgdb ${items}"
+implementations["vpm", "verify-all-packages"]      = "strat -r ${stratum} vpm pkgdb -a ${items}"
+implementations["vpm", "mark-packages-explicit"]   = "strat -r ${stratum} vpm pkgdb -m manual ${items}"
+implementations["vpm", "mark-packages-implicit"]   = "strat -r ${stratum} vpm pkgdb -m auto ${items}"
+implementations["vpm", "show-package-information"] = "strat -r ${stratum} vpm in ${flags} ${items}"
+implementations["vpm", "clear-cache"]              = "strat -r ${stratum} vpm cl ${flags}"
+implementations["vpm", "remove-orphans"]           = "strat -r ${stratum} vpm ar ${flags} ${items}"
+implementations["vpm", "update-package-database"]  = "strat -r ${stratum} vpm ${flags} S"
+implementations["vpm", "update-file-database"]     = "strat -r ${stratum} vpm wp"
+implementations["vpm", "upgrade-packages-limited"] = "strat -r ${stratum} vpm up ${flags}"
+implementations["vpm", "upgrade-packages-full"]    = "strat -r ${stratum} vpm up ${flags}"
+
+#
+# Combine operations.
+#
+user_interfaces["vpm", "clear-cache,remove-orphans"]                                                             = "pmm cl ar"
+user_interfaces["vpm", "mark-packages-implicit,remove-orphans"]                                                  = ""
+user_interfaces["vpm", "remove-packages-limited,remove-orphans"]                                                 = "pmm remove <pkgs> ar"
+user_interfaces["vpm", "remove-packages-full,remove-orphans"]                                                    = ""
+user_interfaces["vpm", "update-package-database,update-file-database"]                                           = ""
+user_interfaces["vpm", "update-package-database,upgrade-packages-partial"]                                       = ""
+user_interfaces["vpm", "update-package-database,upgrade-packages-full"]                                          = "pmm sy up"
+user_interfaces["vpm", "update-package-database,update-file-database,upgrade-packages-partial"]                  = ""
+user_interfaces["vpm", "update-package-database,update-file-database,upgrade-packages-full"]                     = ""
+user_interfaces["vpm", "update-package-database,install-packages"]                                               = "pmm S <pkgs>"
+user_interfaces["vpm", "update-package-database,update-file-database,install-packages"]                          = ""
+user_interfaces["vpm", "upgrade-packages-limited,install-packages"]                                              = ""
+user_interfaces["vpm", "upgrade-packages-full,install-packages"]                                                 = ""
+user_interfaces["vpm", "update-package-database,upgrade-packages-partial,install-packages"]                      = ""
+user_interfaces["vpm", "update-package-database,upgrade-packages-full,install-packages"]                         = ""
+user_interfaces["vpm", "update-package-database,update-file-database,upgrade-packages-partial,install-packages"] = ""
+user_interfaces["vpm", "update-package-database,update-file-database,upgrade-packages-full,install-packages"]    = ""
+
+implementations["vpm", "clear-cache,remove-orphans"]                                                             = "strat -r ${stratum} vpm cl ar ${flags}"
+implementations["vpm", "mark-packages-implicit,remove-orphans"]                                                  = ""
+implementations["vpm", "remove-packages-limited,remove-orphans"]                                                 = "strat -r ${stratum} vpm remove ${flags} ${items} ar"
+implementations["vpm", "remove-packages-full,remove-orphans"]                                                    = "strat -r ${stratum} vpm remove ${flags} ${items} ar"
+implementations["vpm", "update-package-database,update-file-database"]                                           = ""
+implementations["vpm", "update-package-database,upgrade-packages-partial"]                                       = "strat -r ${stratum} vpm up ${flags}"
+implementations["vpm", "update-package-database,upgrade-packages-full"]                                          = "strat -r ${stratum} vpm up ${flags}"
+implementations["vpm", "update-package-database,update-file-database,upgrade-packages-partial"]                  = ""
+implementations["vpm", "update-package-database,update-file-database,upgrade-packages-full"]                     = ""
+implementations["vpm", "update-package-database,install-packages"]                                               = "strat -r ${stratum} vpm ${flags} S ${items}"
+implementations["vpm", "update-package-database,update-file-database,install-packages"]                          = ""
+implementations["vpm", "upgrade-packages-limited,install-packages"]                                              = ""
+implementations["vpm", "upgrade-packages-full,install-packages"]                                                 = ""
+implementations["vpm", "update-package-database,upgrade-packages-partial,install-packages"]                      = ""
+implementations["vpm", "update-package-database,upgrade-packages-full,install-packages"]                         = ""
+implementations["vpm", "update-package-database,update-file-database,upgrade-packages-partial,install-packages"] = ""
+implementations["vpm", "update-package-database,update-file-database,upgrade-packages-full,install-packages"]    = ""
+
+#
+# Operations which have a standardized output format.
+#
+user_interfaces["vpm", "list-installed-package-files"] = "pmm fl <pkg>"
+user_interfaces["vpm", "list-installed-explicit"]      = "pmm query -m/--list-manual-pkgs"
+user_interfaces["vpm", "list-installed-implicit"]      = ""
+user_interfaces["vpm", "list-installed-packages"]      = "pmm ls"
+user_interfaces["vpm", "list-available-packages"]      = "pmm s *"
+user_interfaces["vpm", "search-for-package-by-name"]   = ""
+user_interfaces["vpm", "search-for-package-by-all"]    = "pmm s <text>"
+user_interfaces["vpm", "which-package-owns-file"]      = "pmm wp <file>"
+user_interfaces["vpm", "which-packages-provide-file"]  = "pmm sf <file>"
+
+implementations["vpm", "list-installed-package-files"] = "strat -r ${stratum} vpm ls  ${items}"
+implementations["vpm", "list-installed-explicit"]      = "strat -r ${stratum} vpm query -m | sed 's/-[0-9.]\\+_[0-9]\\+$//'"
+implementations["vpm", "list-installed-implicit"]      = "strat -r ${stratum} vpm query -l |\
+	awk 'BEGIN {\
+		while ((\"strat -r ${stratum} xbps-query -m\" | getline) > 0) {\
+			sub(/-[^-]*$/,\"\");\
+			x[$0]\
+		}\
+	}\
+	$1 == \"ii\" {\
+		sub(/-[^-]+$/,\"\", $2);\
+		if (!($2 in x)) {\
+			print $2\
+		}\
+	}'"
+implementations["vpm", "list-installed-packages"]      = "strat -r ${stratum} vpm ls | awk '$1 == \"ii\" {sub(/-[0-9.]+_[0-9]+$/, \"\", $2); print $2}'"
+implementations["vpm", "list-available-packages"]      = "strat -r ${stratum} vpm s '*' |\
+	awk '{\
+		sub(/-[0-9.]+_[0-9]+$/, \"\", $2);\
+		x[$2]\
+	}\
+	END {\
+		for (p in x) {\
+			print p\
+		}\
+	}'"
+implementations["vpm", "search-for-package-by-name"]   = "strat -r ${stratum} vpm s '*' |\
+	awk -vi=${items} '{\
+		sub(/-[0-9.]+_[0-9]+$/, \"\", $2);\
+		if ($2 ~ i) {\
+			x[$2]\
+		}\
+	}\
+	END {\
+		for (p in x) {\
+			print p\
+		}\
+	}'"
+implementations["vpm", "search-for-package-by-all"]    = "strat -r ${stratum} vpm s ${items} |\
+	awk '{\
+		sub(/-[0-9.]+_[0-9]+$/, \"\", $2);\
+		x[$2]\
+	}\
+	END {\
+		for (p in x) {\
+			print p\
+		}\
+	}'"
+implementations["vpm", "which-package-owns-file"]      = "strat -r ${stratum} vpm query -o \"*${items}*\" | awk '{sub(/-[0-9.]+_.:$/,\"\",$1); print $1\"\t\"$2}'"
+implementations["vpm", "which-packages-provide-file"]  = "strat -r ${stratum} xlocate ${items} | sed 's/-[0-9.]\\+_[^\t]\t/\t/'"
+
+#
+# Internal pmm operations.
+#
+implementations["vpm", "is-package-installed"]               = "strat -r ${stratum} vpm query ${items} >/dev/null 2>&1"
+implementations["vpm", "is-package-available"]               = "strat -r ${stratum} vpm query -R ${items} >/dev/null 2>&1"
+implementations["vpm", "is-file-db-available"]               = "strat -r ${stratum} vpm query xtools >/dev/null 2>&1"
+implementations["vpm", "print-file-db-install-instructions"] = "echo \"Install xtools in ${stratum}:vpm to perform file-db operations\""
+implementations["vpm", "print-package-version"]              = "strat -r ${stratum} vpm query ${items} | awk '$1 == \"pkgver:\" {sub(/^.*-/, \"\", $2); sub(/_[0-9]+$/, \"\", $2); print $2}'"
+implementations["vpm", "cache-package-db"]                   = "strat -r ${stratum} vpm query -Rs '*' |\
+	awk '{\
+		name = $2;\
+		ver = $2;\
+		sub(/-[^-]+$/, \"\",name);\
+		sub(/^.*-/, \"\", ver);\
+		sub(/_[0-9]*$/, \"\", ver);\
+		print name\"\t\"ver\
+	}'"
